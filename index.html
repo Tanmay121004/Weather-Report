@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weather Report by Tanmay</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 1s ease;
+  overflow: hidden;
+}
+
+/* 🌈 WEATHER THEMES */
+
+/* ☀ CLEAR SKY */
+body.clear {
+  background: linear-gradient(135deg, #56ccf2, #2f80ed);
+}
+
+/* 🌫 CLOUDY */
+body.cloudy {
+  background: linear-gradient(135deg, #757f9a, #d7dde8);
+}
+
+/* 🌧 RAIN */
+body.rainy {
+  background: linear-gradient(135deg, #314755, #26a0da);
+}
+
+/* ❄ SNOW */
+body.snow {
+  background: linear-gradient(135deg, #e6dada, #274046);
+}
+
+/* 🌙 NIGHT */
+body.night {
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+/* 🌟 CARD */
+.container {
+  width: 350px;
+  padding: 30px;
+  border-radius: 25px;
+  backdrop-filter: blur(25px);
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  text-align: center;
+  color: white;
+  animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform: translateY(20px);}
+  to {opacity:1; transform: translateY(0);}
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+}
+
+/* 🔍 SEARCH */
+.search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.search input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+}
+
+.search button {
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.search button:hover {
+  transform: scale(1.1);
+}
+
+/* 📍 BUTTON */
+.loc-btn {
+  margin-bottom: 15px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+/* 🌦 WEATHER DISPLAY */
+.weather img {
+  width: 100px;
+  transition: 0.4s;
+}
+
+.weather img:hover {
+  transform: scale(1.2) rotate(8deg);
+}
+
+.temp {
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.desc {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.extra {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* ⏳ LOADER */
+.loader {
+  display: none;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-top: 5px solid white;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  margin: 20px auto;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🌤 Weather Report by Tanmay</h1>
+
+  <div class="search">
+    <input id="cityInput" placeholder="Search city...">
+    <button onclick="getWeather()">🔍</button>
+  </div>
+
+  <button class="loc-btn" onclick="getLocation()">📍 Use My Location</button>
+
+  <div class="loader" id="loader"></div>
+
+  <div class="weather">
+    <h2 id="city">Detecting location...</h2>
+    <img id="icon">
+    <div class="temp" id="temp">--°C</div>
+    <div class="desc" id="desc">--</div>
+    <div class="extra" id="extra"></div>
+  </div>
+</div>
+
+<script>
+const apiKey = "ba33e68eda7c48afaf093613260904";
+
+function showLoader(show) {
+  document.getElementById("loader").style.display = show ? "block" : "none";
+}
+
+/* 🎨 SMART THEME ENGINE */
+function setTheme(condition, isDay) {
+  const body = document.body;
+  body.className = "";
+
+  condition = condition.toLowerCase();
+
+  if (!isDay) {
+    body.classList.add("night");
+  } else if (condition.includes("clear") || condition.includes("sunny")) {
+    body.classList.add("clear");
+  } else if (condition.includes("rain") || condition.includes("drizzle")) {
+    body.classList.add("rainy");
+  } else if (condition.includes("snow")) {
+    body.classList.add("snow");
+  } else {
+    body.classList.add("cloudy");
+  }
+}
+
+/* 🌤 FETCH WEATHER */
+async function getWeather(city) {
+  const input = document.getElementById("cityInput").value;
+  const query = city || input;
+
+  if (!query) return alert("Enter city");
+
+  showLoader(true);
+
+  try {
+    const res = await fetch(`http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${query}&aqi=yes`);
+    const data = await res.json();
+
+    document.getElementById("city").innerText =
+      data.location.name + ", " + data.location.country;
+
+    document.getElementById("temp").innerText =
+      data.current.temp_c + "°C";
+
+    document.getElementById("desc").innerText =
+      data.current.condition.text;
+
+    document.getElementById("icon").src =
+      data.current.condition.icon;
+
+    document.getElementById("extra").innerText =
+      "Feels like: " + data.current.feelslike_c +
+      "°C | Humidity: " + data.current.humidity + "%";
+
+    setTheme(data.current.condition.text, data.current.is_day);
+
+  } catch {
+    alert("City not found");
+  }
+
+  showLoader(false);
+}
+
+/* 📍 AUTO LOCATION */
+function getLocation() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const coords = pos.coords.latitude + "," + pos.coords.longitude;
+    getWeather(coords);
+  });
+}
+
+/* 🚀 AUTO LOAD */
+window.onload = () => {
+  getLocation();
+};
+</script>
+
+</body>
+</html>
